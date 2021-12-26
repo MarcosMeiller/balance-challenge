@@ -31,8 +31,11 @@ y te carga la coleccion con los 2 endpoints
 
 Mejoras a hacer:
 _reconocer emoticonos con (:3 y que tome el :3 y otros tipos de emoticonos, creando una lista.
+
 _mejorar el codigo para que haga todo el proceso en un unico recorrido.
+
 _agregar front con una app de react y que llame a los endpoints para tener una interfaz interactiva.
+
 _agregar endpoints eliminar y update.
 
 Creada por Marcos Meiller.
