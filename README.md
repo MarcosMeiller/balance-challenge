@@ -22,10 +22,6 @@ bundle install rails db:create
 rails db:migrate 
 
 rails s 
-
-importar este link de postman colection :https://www.getpostman.com/collections/6d86cba18fdf86b1e255 
-Y probar los endpoints
-
 links de heroku:
 GET  https://guarded-crag-85942.herokuapp.com/messages para index de mensajes
 
@@ -43,7 +39,5 @@ _reconocer emoticonos con (:3 y que tome el :3 y otros tipos de emoticonos, crea
 _mejorar el codigo para que haga todo el proceso en un unico recorrido.
 
 _agregar front con una app de react y que llame a los endpoints para tener una interfaz interactiva.
-
-_agregar endpoints eliminar y update.
 
 Creada por Marcos Meiller.
