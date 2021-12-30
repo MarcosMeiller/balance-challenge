@@ -65,6 +65,7 @@ class Message < ApplicationRecord
                 i += 1
             end
             break if @balanced == true
+            i = 0
             j += 1
         end
     else
@@ -81,6 +82,7 @@ class Message < ApplicationRecord
             end
             @balanced = true if @count_right == @count_left 
             break if @balanced == true
+            i = 0
             j += 1
         end
     end
