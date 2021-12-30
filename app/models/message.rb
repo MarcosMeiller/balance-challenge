@@ -1,7 +1,4 @@
-# frozen_string_literal: true
-
 class Message < ApplicationRecord
-  # Ex:- :default =>''
 
   before_save :control_balance
 
@@ -9,142 +6,138 @@ class Message < ApplicationRecord
   def control_balance
     self.is_balanced = check_balance(content)
   end
-
   # {este es el primer control que crea las variables y las llama}
   def check_balance(content)
     count = 0
+    @balanced = false
     @count_left = 0 # {contador de llaves que abren "("}
+    @pos_left = [] #{posicion de las llaves que abren}
     @count_right = 0 # {contador de llaves que cierran "(" }
+    @pos_right = [] #{posicion de las llaves que cierran}
+    @pos_dot = [] #{posicion de los :}
+
     while count < content.length # {recorro el array hasta el final}
       case content[count]
       when '('
-        @count_left += check_emoticon(content, count) # {como encontre un parentesis que abre llamo a la funcion y lo sumo si es que cumple con los requisitos}
+        @count_left += 1 # {como encontre un parentesis que abre llamo a la funcion y lo sumo si es que cumple con los requisitos}
+        @pos_left[@pos_left.length] = count #if pos_left.length == 0
+
       when ')' # {lo mismo que con el condicional anterior}
-        @count_right += check_emoticon(content, count)
+        @count_right += 1
+        @pos_right[@pos_right.length] = count
+      when ':'
+        @pos_dot[@pos_dot.length] = count
       end
       count += 1
     end
-
-    final_check(content) # {hago un ultimo checkeo para aplicar la regla 5}
-
-    @count_left == @count_right
-  end
-
-  # {aca se checkea la regla 5 recorriendolo desde atras y checkeando que no haya problemas con el length del string}
-  def final_check(content)
-    flag = false
-    count = content.length
-    if count > 3 && @count_left != @count_right
-      while count.positive?
-        if content[count] == ')' && (count - 2).positive?
-          flag = check_emotes_inside(content[count - 3] + content[count - 2] + content[count - 1] + content[count])
-          count -= 3 if flag
-        end
-        if flag
-          flag = false
-        else
-          count -= 1
-        end
-      end
-    end
-  end
-
-  # {funcion que hace el primer recorrido del string, donde compruebo todas las reglas menos la 5}
-  def check_emoticon(content, count)
-    check_emote_left = ''
-    check_emote_right = ''
-    result = false
-    if count.positive? && count + 1 < content.length
-      if check_eyes(content[count - 1]) && content[count - 2] != '('
-        check_emote_left = content[count - 1] + content[count]
-      end
-      if check_eyes(content[count + 1]) && content[count + 2] != ')'
-        check_emote_right = content[count] + content[count + 1]
-      end
-
-      if content.length - count > 2 # {compruebo esto para no tener problemas con el tamaño del index}
-        if check_points_inside(content[count] + content[count + 1] + content[count + 2]) || check_points_inside(content[count - 2] + content[count - 1] + content[count])
-          return 0
-        end
-      elsif count > 1 # {en caso de que no uso esta funcion}
-        return 0 if check_points_inside(content[count - 2] + content[count - 1] + content[count]) # {checkeo la regla 2}
-      end
-    elsif count.zero? # {en caso de encontrar desde el inicio el parentesis}
-      if content.length > 2 # {checkeo para no tener error de index}
-        if check_eyes(content[count + 1]) && content[count + 2] != ')'
-          check_emote_right = content[count] + content[count + 1]
-        end
-        if check_points_inside(string = content[count] + content[count + 1] + content[count + 2])
-          count += 2
-          return 0 # {retorno 0 en caso de que se cumpla la regla 2 con los "(:)"}
-        end
-      elsif check_eyes(content[count + 1])
-        check_emote_right = content[count] + content[count + 1]
-      end
-    elsif count == content.length - 1 # {en caso de estar en la ultima pos del string}
-      if  content.length - count > 3 # {checkeo que sea mayor a 3 para no tener problemas con el tamaño del index}
-        if check_eyes(content[count - 1]) && content[count] != '(' && !check_points_inside(content[count] + content[count - 1] + content[count - 2])
-          check_emote_left = content[count - 1] + content[count]
-        end
-        if check_points_inside(string = content[count] + content[count + 1] + content[count - 2])
-          check_emote_right = ''
-        end
-      elsif check_eyes(content[count - 1]) && content[count] != '('
-        check_emote_left = content[count - 1] + content[count]
-      end
-    end
-
-    if check_emotes(check_emote_left) || check_emotes(check_emote_right) # {checkeo si encontro un parentesis que no pertenezca a un emote y retorno 1 si encontro sino 0}
-      0
+    if @count_left == 0 && @count_right == 0
+        @balanced = true
+    elsif @count_right == 0 && @count_left > 0
+        @count_left = check_aux(@pos_left,@count_left,content)
+    elsif @count_left == 0 && @count_right > 0
+        @count_right = check_aux(@pos_right,@count_right,content)
+    elsif @count_left != @count_right && @pos_dot != []
+        check_pos(content)
     else
-      1
+        @balanced = false
+    end
+
+    if @count_right == @count_left && check_closed
+      @balanced = true
+    else
+      @balanced = false
     end
   end
 
-  # {controla la regla 2}
-  def check_points_inside(string)
-    array = ['(:)', '(;)']
-    flag = false
+  def check_pos(content)
+    i = 0
+    j = 0
+    cpy_count_right = 0
+    cpy_count_left = 0
+    if @count_left > @count_right
+        while @pos_dot.length > j 
+            while @pos_left.length > i
+                if @pos_left[i] - @pos_dot[j] == 1
+                    @count_left -= 1
+                end
+                @balanced = true if @count_right == @count_left
+                break if @balanced == true
+                i += 1
+            end
+            break if @balanced == true
+            j += 1
+        end
+    else
+        while @pos_dot.length > j 
+        i = 0
+        cpy_count_right = @count_right
+            while @pos_right.length > i
+
+                if @pos_right[i] - @pos_dot[j] == 1
+                    @count_right -= 1
+                end
+                i += 1
+                break if cpy_count_right != @count_right
+            end
+            @balanced = true if @count_right == @count_left 
+            break if @balanced == true
+            j += 1
+        end
+    end
+  end
+
+  def check_closed
+    closed = true
+    closed_count = 0
+    i = 0
+    j = 0
+    not_closed = 0
+    while @pos_right.length > i
+        while @pos_left.length > j 
+            if @pos_right[i] < @pos_left[j] && !check_emotes(content[@pos_right[i] - 1] + content[@pos_right[i]])
+                not_closed += 1
+  
+                return closed = false if not_closed == @pos_right.length || j == @pos_left.length
+            end
+        j += 1
+        end
+        i += 1
+        j = 0
+    end
+    not_closed = 0 
+    while @pos_left.length > i
+        while @pos_right.length > j 
+            if (@pos_left[i] > @pos_right[j] && !check_emotes(content[@pos_left[i] + 1] + content[@pos_left[i]])) 
+                not_closed += 1
+                closed = false
+                return closed = false if not_closed == @pos_left.length  || i == @pos_right.length 
+            end
+        j += 1
+        end
+        j = 0
+        i += 1
+    end
+    return closed
+  end
+
+  def check_aux (array,count,content)
+    i = 0
+    dat = ""
     array.each do |element|
-      flag = true if element == string
+        if check_emotes(content[element - 1] + content[element])
+            count -= 1
+        end
     end
-    flag
+    return count
   end
 
-  # {controla la regla 5}
-  def check_emotes_inside(string)
-    array = ['(:))', '(;))', '((:)', '((;)']
-    flag = false
-    array.each do |element|
-      next unless element == string
-
-      flag = true
-      if string == array[0] || string == array[1]
-        @count_right -= 1
-      else
-        @count_left -= 1
-      end
-    end
-    flag
-  end
-
-  # {controla los ; y : para los emotes}
-  def check_eyes(string)
-    array = [':', ';']
-    flag = false
-    array.each do |element|
-      flag = true if element == string
-    end
-    flag
-  end
-
-  # {controla los emotes}
   def check_emotes(check)
-    emoticons = [':)', ':(', '(:', '):', ';)', ';(', '(;', ');']
+    emoticons = [':)', ':(']
     flag = false
     emoticons.each do |emoticon|
       flag = true if emoticon == check
     end
     flag
-  end
+ end
+
 end
