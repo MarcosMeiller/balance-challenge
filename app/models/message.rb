@@ -49,7 +49,7 @@ class Message < ApplicationRecord
     end
   end
 
-  def check_pos(content)
+  def check_pos(content) #{checkea la cantidad de parentesis que abren y cierran y que sino sean un emote, sino cierra}
     i = 0
     j = 0
     cpy_count_right = 0
@@ -60,7 +60,7 @@ class Message < ApplicationRecord
                 if @pos_left[i] - @pos_dot[j] == 1
                     @count_left -= 1
                 end
-                @balanced = true if @count_right == @count_left
+                @balanced = true if @count_right == @count_left 
                 break if @balanced == true
                 i += 1
             end
@@ -78,9 +78,9 @@ class Message < ApplicationRecord
                     @count_right -= 1
                 end
                 i += 1
-                break if cpy_count_right != @count_right
+                break if cpy_count_right != @count_right #{en caso que haya cambiado el contador, pasa al siguiente}
             end
-            @balanced = true if @count_right == @count_left 
+            @balanced = true if @count_right == @count_left #{termina todo el ciclo si ya se lograron balancear}
             break if @balanced == true
             i = 0
             j += 1
@@ -88,7 +88,7 @@ class Message < ApplicationRecord
     end
   end
 
-  def check_closed
+  def check_closed #{checkea que esten cerrado los emotes}
     closed = true
     closed_count = 0
     i = 0
@@ -96,10 +96,10 @@ class Message < ApplicationRecord
     not_closed = 0
     while @pos_right.length > i
         while @pos_left.length > j 
-            if @pos_right[i] < @pos_left[j] && !check_emotes(content[@pos_right[i] - 1] + content[@pos_right[i]])
+            if @pos_right[i] < @pos_left[j] && !check_emotes(content[@pos_right[i] - 1] + content[@pos_right[i]]) #{compara si que en ninguna posicion logro cerrar este parentesis y no tiene : entonces lo deja como desbalanceado}
                 not_closed += 1
   
-                return closed = false if not_closed == @pos_right.length || j == @pos_left.length
+                return closed = false if not_closed == @pos_right.length || j == @pos_left.length 
             end
         j += 1
         end
@@ -109,10 +109,10 @@ class Message < ApplicationRecord
     not_closed = 0 
     while @pos_left.length > i
         while @pos_right.length > j 
-            if (@pos_left[i] > @pos_right[j] && !check_emotes(content[@pos_left[i] + 1] + content[@pos_left[i]])) 
+            if (@pos_left[i] > @pos_right[j] && !check_emotes(content[@pos_left[i] + 1] + content[@pos_left[i]])) #{compara si que en ninguna posicion logro cerrar este parentesis y no tiene : entonces lo deja como desbalanceado}
                 not_closed += 1
                 closed = false
-                return closed = false if not_closed == @pos_left.length  || i == @pos_right.length 
+                return closed = false if not_closed == @pos_left.length  || i == @pos_right.length #{controlador que haya recorrido todas las combinaciones}
             end
         j += 1
         end
@@ -122,9 +122,8 @@ class Message < ApplicationRecord
     return closed
   end
 
-  def check_aux (array,count,content)
+  def check_aux (array,count,content) #{checkea que sean emote todos los datos enviados y descuenta si es que son}
     i = 0
-    dat = ""
     array.each do |element|
         if check_emotes(content[element - 1] + content[element])
             count -= 1
@@ -133,7 +132,7 @@ class Message < ApplicationRecord
     return count
   end
 
-  def check_emotes(check)
+  def check_emotes(check) #{checkea los emotes}
     emoticons = [':)', ':(']
     flag = false
     emoticons.each do |emoticon|
