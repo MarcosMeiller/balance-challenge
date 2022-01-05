@@ -15,7 +15,7 @@ ejecutar en consola:
 
 git clone https://github.com/MarcosMeiller/balance-challenge.git
 
-cd Api-Rest-Increase
+cd balance-messages
 
 bundle install rails db:create
 
